@@ -1,5 +1,5 @@
 ### 项目说明
-- python爬虫
+- python3.5爬虫
 
 ### git相关操作
 - 地址：git@github.com:lamborghini1993/WebCrawler.git
