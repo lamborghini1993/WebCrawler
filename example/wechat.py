@@ -1,12 +1,17 @@
 # -*- coding:utf-8 -*-
+# 肖豪
+# 使用了图灵机器人api接入微信自动回复
 
+"""
+外部库:itchat
+"""
 
 import urllib
 import itchat #这是一个用于微信回复的库
 import json
 
 KEY = 'ca098ebe818b49df98af997bef29b3b3' #这个key可以直接拿来用
-# KEY = '63eb9f95bd2945e79bcceca31dc09935' #这个key可以直接拿来用
+# KEY = '63eb9f95bd2945e79bcceca31dc09935' #我的key
 
 # 向api发送请求
 def get_response(msg):
