@@ -6,3 +6,4 @@
 - git remote add origin 
 - git push -u origin master
 - git pull -u origin master
+- test
