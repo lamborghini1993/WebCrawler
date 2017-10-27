@@ -1,11 +1,10 @@
-# -*- coding:utf8 -*-
+# -*- coding:utf-8 -*-
+# 肖豪
+# sqlite3的使用
 
 import sqlite3
 
-class CSqlite(object):
-	pass
-
-TABLE_NEI_HAN="""
+TABLE_NEI_HAN = """
 create table if NOT EXISTS NeiHan
 (
 	ID int unsigned primary key,
@@ -17,7 +16,9 @@ create table if NOT EXISTS NeiHan
 )
 """
 
-conn=sqlite3.connect("NeiHan")
-cursor=conn.cursor()
+conn = sqlite3.connect("xxx.sql")
+cursor = conn.cursor()
 cursor.execute(TABLE_NEI_HAN)
-cursor.close
+cursor.close()
+
+
