@@ -1,4 +1,5 @@
 # -*- coding:utf8 -*-
+# 肖豪
 
 def Init():
 	import xiaoshuo.shubao888
