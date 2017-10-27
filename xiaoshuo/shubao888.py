@@ -1,5 +1,5 @@
 # -*- coding:utf8 -*-
-# 第二书包
+# 肖豪
 # 网站链接 http://www.shubao888.com/xiaoshuo/6/1.html
 
 from pubdefine import *
