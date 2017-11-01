@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
+"""
+@Author: lamborghini1993
+@Date: 2017-11-01 11:43:36
+@Last Modified by:   lamborghini1993
+@Last Modified time: 2017-11-01 11:43:36
+"""
 
-import audiobook
+
+def initconfig():
+    pass
+
 
 def Start():
-	audiobook.Init()
+    initconfig()
 
-# def Start():
-# 	obj=xiee.xieegif.CXieEGIF()
-# 	try:
-# 		obj.Start()
-# 	except Exception as e:
-# 		print(e)
-# 	finally:
-# 		obj.Save()
-# 		print("已存档...")
 
-if __name__=="__main__":
-	Start()
+if __name__ == "__main__":
+    Start()
