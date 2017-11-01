@@ -7,12 +7,8 @@
 """
 
 
-def initconfig():
-    pass
-
-
 def Start():
-    initconfig()
+    pass
 
 
 if __name__ == "__main__":
