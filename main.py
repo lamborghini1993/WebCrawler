@@ -6,10 +6,13 @@
 @Last Modified time: 2017-11-01 11:43:36
 """
 
+from budejie import text
 
-def Start():
-    pass
+
+def start():
+    obj = text.CText()
+    obj.start()
 
 
 if __name__ == "__main__":
-    Start()
+    start()

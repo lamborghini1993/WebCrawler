@@ -3,30 +3,36 @@
 
 import sqlite3
 
+
 class CDBManager(object):
+    """轻量级数据库基类"""
 
-	m_DBName = ""
+    dbname = ""
+    createtable = ""
+    tablename = ""
 
-	def __init__(self):
-		self.m_Conn = None
-		self.InitConn()
-		self.CreateTable()
+    def __init__(self):
+        self.conn = None
+        self.creat_table()
 
-	def InitConn(self):
-		self.m_Conn = sqlite3.connect(self.m_DBName)
+    def init_conn(self):
+        if self.conn:
+            return
+        self.conn = sqlite3.connect(self.dbname)
 
-	def CreateTable(self):
-		self.Execute(TABLE_NEI_HAN)
+    def creat_table(self):
+        self.execute(self.createtable)
+        self.execute("use {}".format(self.tablename))
 
-	def GetCursor(self):
-		if not self.m_Conn:
-			self.m_Conn = sqlite3.connect(self.m_DBName)
-		oCursor = self.m_Conn.cursor()
-		return oCursor
+    def get_cursor(self):
+        if not self.conn:
+            self.conn = sqlite3.connect(self.dbname)
+        cursor = self.conn.cursor()
+        return cursor
 
-	def Execute(self, sql):
-		oCursor = self.m_Conn.cursor()
-		oCursor.execute(sql)
-		self.m_Conn.commit()
-		oCursor.close()
-
+    def execute(self, sql):
+        self.init_conn()
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        self.conn.commit()
+        cursor.close()
