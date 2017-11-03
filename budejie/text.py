@@ -73,7 +73,8 @@ class CText(basecrawler.CWebCrawler):
         if not bs4obj:
             return False
         binsert = 1
-        for oclass in bs4obj.findAll("div", class_=re.compile("j-r-list-c-desc")):
+        pat = re.compile("j-r-list-c-desc")
+        for oclass in bs4obj.findAll("div", class_=pat):
             tmp = oclass.a
             html = tmp.attrs["href"]
             htmlid = html.replace("/detail-", "").replace(".html", "")
