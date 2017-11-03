@@ -15,22 +15,22 @@ from db import dbmanager
 
 
 TABLE_TEXT = """
-create table if NOT EXISTS text
+create table if NOT EXISTS {}
 (
-    id int unsingned primary key,
+    bid int unsingned primary key,
     content TEXT
 )
 """
 
 
 class CDBManager(dbmanager.CDBManager):
-    createtable = TABLE_TEXT
-    dbname = "budejie.sql"
+    dbfile = "budejie/budejie.sql"
     tablename = "text"
+    create_table_info = TABLE_TEXT.format(tablename)
 
-    keylist = ["id"]
+    keylist = ["bid"]
     colinfo = {
-        "id": int,
+        "bid": int,
         "content": str,
     }
 
@@ -56,22 +56,18 @@ class CDBManager(dbmanager.CDBManager):
         return sql
 
     def insert_info(self, key, content):
+        if key in self.dbkeylist:
+            return 1  # 已存在数据库
         obj = CDBObject(key, content)
         sql = self.get_insert_sql(obj)
         self.execute(sql)
-
-    def get_key_list(self):
-        keynames = ",".join(self.keylist)
-        sql = "select {} from {}".format(keynames, self.tablename)
-        sql = "select * from {}".format(self.tablename)
-        print(sql)
-        result = self.execute(sql)
-        print(result)
+        self.dbkeylist.append(key)
+        return 0
 
 
 class CDBObject(object):
-    def __init__(self, id, content):
-        self.id = id
+    def __init__(self, bid, content):
+        self.bid = bid
         self.content = content
 
 
@@ -82,11 +78,22 @@ class CText(basecrawler.CWebCrawler):
         super(CText, self).__init__()
         self.dbmgr = CDBManager()
 
+    def find_all_url(self):
+        for adr in range(1, 100):
+            url = self.url + str(adr)
+            url_return = self.get_url_info(url)
+            if not url_return:
+                return
+
     def start(self):
-        self.dbmgr.get_key_list()
-        return
-        url = self.get_url()
+        self.find_all_url()
+        self.done()
+
+    def get_url_info(self, url):
         bs4obj = self.get_bs4_by_url(url)
+        if not bs4obj:
+            return False
+        binsert = 1
         for oclass in bs4obj.findAll("div", class_=re.compile("j-r-list-c-desc")):
             tmp = oclass.a
             html = tmp.attrs["href"]
@@ -94,8 +101,9 @@ class CText(basecrawler.CWebCrawler):
             htmlid = int(htmlid)
             text = tmp.text
             text = text.replace(" ", "")
-            self.dbmgr.insert_info(htmlid, text)
-            return
-
-    def get_url(self):
-        return self.url
+            binsert = self.dbmgr.insert_info(htmlid, text)
+        if binsert:
+            print("exist {}".format(url))
+        else:
+            print("done\t{}".format(url))
+        return True

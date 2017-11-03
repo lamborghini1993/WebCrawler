@@ -19,14 +19,13 @@ class CWebCrawler(object):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) \
             Gecko/20100101 Firefox/57.0"
     }
+    max_try_num = 11
 
     def done(self):
         print("\n全部下载完毕。。")
 
     def get_bs4_by_url(self, sUrl, timeout=10):
-        num = 0
-        while True:
-            num += 1
+        for num in range(1, self.max_try_num):
             try:
                 req = urllib.request.Request(sUrl, headers=self.headers)
                 response = urllib.request.urlopen(req, timeout=timeout)
@@ -34,6 +33,7 @@ class CWebCrawler(object):
                 return bs4obj
             except Exception as err:
                 print("\t第{}次开始尝试获取失败{}--{}".format(num, sUrl, err))
+        return None
 
     def get_data_by_url(self, sUrl, timeout=10):
         response = urllib.request.urlopen(sUrl, timeout=timeout)
