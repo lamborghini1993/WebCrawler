@@ -5,13 +5,13 @@
 @Last Modified by:   lamborghini1993
 @Last Modified time: 2017-11-02 16:00:43
 @Desc:
-    百思不得姐段子
+    百思不得姐 段子获取
     http://www.budejie.com/text/
 """
 
 import re
 import basecrawler
-from db import dbmanager
+import basedbmgr
 
 
 TABLE_TEXT = """
@@ -23,7 +23,7 @@ create table if NOT EXISTS {}
 """
 
 
-class CDBManager(dbmanager.CDBManager):
+class CDBManager(basedbmgr.CDBManager):
     dbfile = "budejie/budejie.sql"
     tablename = "text"
     create_table_info = TABLE_TEXT.format(tablename)
@@ -33,27 +33,6 @@ class CDBManager(dbmanager.CDBManager):
         "bid": int,
         "content": str,
     }
-
-    def get_col_data(self, value):
-        if isinstance(value, str):
-            return "'{}'".format(value)
-        return str(value)
-
-    def get_insert_sql(self, obj):
-        name_list = []
-        value_list = []
-        for colname, mytype in self.colinfo.items():
-            value = getattr(obj, colname, None)
-            if not isinstance(value, mytype):
-                raise Exception("{} not {} type. {}".format(
-                    colname, mytype, value))
-            name_list.append(colname)
-            value_list.append(self.get_col_data(value))
-        colnames = ",".join(name_list)
-        colvalues = ",".join(value_list)
-        sql = "insert into {}({}) values({})".format(
-            self.tablename, colnames, colvalues)
-        return sql
 
     def insert_info(self, key, content):
         if key in self.dbkeylist:
@@ -105,5 +84,5 @@ class CText(basecrawler.CWebCrawler):
         if binsert:
             print("exist {}".format(url))
         else:
-            print("done\t{}".format(url))
+            print("download {}".format(url))
         return True

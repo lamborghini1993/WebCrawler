@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# 准备停用 2017.11.3
 
 import codecs
 import sys

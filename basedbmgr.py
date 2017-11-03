@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
-# 肖豪
+"""
+@Author: lamborghini1993
+@Date: 2017-11-03 14:31:20
+@Last Modified by:   lamborghini1993
+@Last Modified time: 2017-11-03 14:31:20
+@Desc:
+    db管理器的基类
+"""
 
 import os
 import sqlite3
 from mytool import pubdefines
+
+
+def get_col_data(value):
+    if isinstance(value, str):
+        return "'{}'".format(value)
+    return str(value)
 
 
 class CDBManager(object):
@@ -56,4 +69,19 @@ class CDBManager(object):
         result = self.query(sql)
         for tinfo in result:
             self.dbkeylist.append(tinfo[0])
-        print(self.dbkeylist)
+
+    def get_insert_sql(self, obj):
+        name_list = []
+        value_list = []
+        for colname, mytype in self.colinfo.items():
+            value = getattr(obj, colname, None)
+            if not isinstance(value, mytype):
+                raise Exception("{} not {} type. {}".format(
+                    colname, mytype, value))
+            name_list.append(colname)
+            value_list.append(get_col_data(value))
+        colnames = ",".join(name_list)
+        colvalues = ",".join(value_list)
+        sql = "insert into {}({}) values({})".format(
+            self.tablename, colnames, colvalues)
+        return sql
