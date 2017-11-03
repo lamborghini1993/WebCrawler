@@ -44,7 +44,9 @@ class CDBManager(object):
     def creat_table(self):
         self.execute(self.create_table_info)
 
-    def query(self, sql):
+    def query(self, sql=None):
+        if not sql:
+            sql = "select * from {}".format(self.tablename)
         self.init_conn()
         cursor = self.conn.cursor()
         cursor.execute(sql)

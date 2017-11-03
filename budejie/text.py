@@ -12,7 +12,7 @@
 import re
 import basecrawler
 import basedbmgr
-
+from mytool import pubdefines
 
 TABLE_TEXT = """
 create table if NOT EXISTS {}
@@ -29,6 +29,7 @@ class CDBManager(basedbmgr.CDBManager):
     tablename = "text"
     dbfile = "{}/{}.sql".format(FOLDER_NAME, tablename)
     create_table_info = TABLE_TEXT.format(tablename)
+    resourcename = "resources/{}".format(tablename)
 
     keylist = ["bid"]
     colinfo = {
@@ -44,6 +45,11 @@ class CDBManager(basedbmgr.CDBManager):
         self.execute(sql)
         self.dbkeylist.append(key)
         return 0
+
+    def sql_to_resource(self):
+        result = self.query()
+        for _, content in result:
+            pubdefines.write_to_file(self.resourcename, content)
 
 
 class CDBObject(object):
@@ -69,6 +75,9 @@ class CText(basecrawler.CWebCrawler):
     def start(self):
         self.find_all_url()
         self.done()
+
+    def resource(self):
+        self.dbmgr.sql_to_resource()
 
     def get_url_info(self, url):
         bs4obj = self.get_bs4_by_url(url)
