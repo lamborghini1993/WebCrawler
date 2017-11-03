@@ -22,10 +22,12 @@ create table if NOT EXISTS {}
 )
 """
 
+FOLDER_NAME = "budejie"
+
 
 class CDBManager(basedbmgr.CDBManager):
-    dbfile = "budejie/budejie.sql"
     tablename = "text"
+    dbfile = "{}/{}.sql".format(FOLDER_NAME, tablename)
     create_table_info = TABLE_TEXT.format(tablename)
 
     keylist = ["bid"]
