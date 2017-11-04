@@ -11,7 +11,8 @@ from budejie import text
 
 def start():
     obj = text.CText()
-    obj.start()
+    # obj.start()
+    # obj.resource()
 
 
 if __name__ == "__main__":

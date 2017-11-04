@@ -29,7 +29,7 @@ class CDBManager(basedbmgr.CDBManager):
     tablename = "text"
     dbfile = "{}/{}.sql".format(FOLDER_NAME, tablename)
     create_table_info = TABLE_TEXT.format(tablename)
-    resourcename = "resources/{}".format(tablename)
+    resourcename = "resources/{}/{}".format(FOLDER_NAME, tablename)
 
     keylist = ["bid"]
     colinfo = {
