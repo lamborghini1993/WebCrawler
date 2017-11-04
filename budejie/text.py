@@ -49,6 +49,7 @@ class CDBManager(basedbmgr.CDBManager):
     def sql_to_resource(self):
         result = self.query()
         for _, content in result:
+            content += "\t\n"
             pubdefines.write_to_file(self.resourcename, content)
 
 
