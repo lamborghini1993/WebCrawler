@@ -7,11 +7,13 @@
 """
 
 from budejie import text
+from haowuya import wuduanzi
 
 
 def start():
-    obj = text.CText()
-    # obj.start()
+    # obj = text.CText()
+    obj = wuduanzi.WuDuanZi()
+    obj.start()
     # obj.resource()
 
 
