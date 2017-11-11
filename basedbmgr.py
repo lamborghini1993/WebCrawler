@@ -87,3 +87,15 @@ class CDBManager(object):
         sql = "insert into {}({}) values({})".format(
             self.tablename, colnames, colvalues)
         return sql
+
+    def del_by_key(self, *key):
+        if len(key) != len(self.keylist):
+            raise Exception("err key num")
+        key_list = []
+        for num, colname in enumerate(self.keylist):
+            wheinfo = "{}={}".format(colname, key[num])
+            key_list.append(wheinfo)
+        keylists = " and ".join(key_list)
+        sql = "DELETE FROM {} WHERE {}".format(self.tablename, keylists)
+        print(sql)
+        self.execute(sql)

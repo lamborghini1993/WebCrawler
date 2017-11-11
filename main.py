@@ -8,12 +8,15 @@
 
 from budejie import text
 from haowuya import wuduanzi
+from meizitu import meizitu
 
 
 def start():
     # obj = text.CText()
-    obj = wuduanzi.WuDuanZi()
+    # obj = wuduanzi.WuDuanZi()
+    obj = meizitu.MeiZiTu()
     obj.start()
+    # obj.my_test()
     # obj.resource()
 
 

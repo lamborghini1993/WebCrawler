@@ -11,6 +11,7 @@
 
 import urllib.request
 import bs4
+from mytool import pubdefines
 
 
 class CWebCrawler(object):
@@ -21,6 +22,10 @@ class CWebCrawler(object):
     }
     max_try_num = 10
     timeout = 10
+    logdir = "tmp"
+
+    def log(self, msg):
+        pubdefines.write_to_file(self.logdir + "/log", msg)
 
     def done(self):
         print("\n全部下载完毕。。")
@@ -30,13 +35,22 @@ class CWebCrawler(object):
             try:
                 req = urllib.request.Request(url, headers=self.headers)
                 response = urllib.request.urlopen(req, timeout=timeout)
-                bs4obj = bs4.BeautifulSoup(response, "html.parser")
+                bs4obj = bs4.BeautifulSoup(
+                    response, "html.parser", from_encoding="gbk")
                 return bs4obj
-            except Exception as err:
-                print("\t第{}次开始尝试获取失败{}--{}".format(num, url, err))
+            except:
+                pass
+        self.log("{}次 尝试获取失败 {}".format(num, url))
         return None
 
     def get_data_by_url(self, url, timeout=timeout):
-        response = urllib.request.urlopen(url, timeout=timeout)
-        data = response.read()
-        return data
+        for num in range(1, self.max_try_num):
+            try:
+                req = urllib.request.Request(url, headers=self.headers)
+                response = urllib.request.urlopen(req, timeout=timeout)
+                data = response.read()
+                return data
+            except:
+                pass
+        self.log("{}次 尝试获取失败 {}".format(num, url))
+        return None
