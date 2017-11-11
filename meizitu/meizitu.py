@@ -74,14 +74,8 @@ class MeiZiTu(basecrawler.CWebCrawler):
         super(MeiZiTu, self).__init__()
         self.dbmgr = CDBManager()
 
-    def my_test(self):
-        # for tmp in range(3980, 4480):
-        #     self.dbmgr.del_by_key(tmp)
-        for tmp in range(3980, 4000):
-            print(self.dbmgr.db_has_key(tmp))
-
     def start(self):
-        for adr in range(3980, 3981):
+        for adr in range(3980, 8888):
             url = self.url + str(adr) + ".html"
             self.get_url_info(url, adr)
 

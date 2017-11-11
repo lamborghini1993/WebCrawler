@@ -16,7 +16,6 @@ def start():
     # obj = wuduanzi.WuDuanZi()
     obj = meizitu.MeiZiTu()
     obj.start()
-    # obj.my_test()
     # obj.resource()
 
 
