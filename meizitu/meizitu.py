@@ -7,7 +7,7 @@
 @Desc:
     http://www.meizitu.com/a/3525.html
     ...
-    http://www.meizitu.com/a/5678.html
+    http://www.meizitu.com/a/5585.html
     爬取妹子图网站上面的图片
 """
 
@@ -57,6 +57,9 @@ class CDBManager(basedbmgr.CDBManager):
             return True
         return False
 
+    def get_max_key(self):
+        return max(self.dbkeylist)
+
 
 class CDBObject(object):
     def __init__(self, bid, tag, title, content):
@@ -75,7 +78,8 @@ class MeiZiTu(basecrawler.CWebCrawler):
         self.dbmgr = CDBManager()
 
     def start(self):
-        for adr in range(3980, 8888):
+        beginadr = self.dbmgr.get_max_key() + 1
+        for adr in range(beginadr, 8888):
             url = self.url + str(adr) + ".html"
             self.get_url_info(url, adr)
 
