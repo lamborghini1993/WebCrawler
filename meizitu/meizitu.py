@@ -94,15 +94,15 @@ class MeiZiTu(basecrawler.CWebCrawler):
         for odiv in bs4obj.findAll("div", class_="metaRight"):
             oh2 = odiv.h2
             oop = odiv.p
-            title = pubdefines.filter(oh2.text)
-            tags = pubdefines.filter(oop.text)
+            title = pubdefines.filter_crlf(oh2.text)
+            tags = pubdefines.filter_crlf(oop.text)
             tags = tags.replace("Tags:", "").replace(" , ", " ").rstrip()
         for odiv in bs4obj.findAll("div", id="picture"):
             oop = odiv.a
             if not oop:
                 continue
             context = odiv.text
-            context = pubdefines.filter(context)
+            context = pubdefines.filter_crlf(context)
         num = 1
 
         """
