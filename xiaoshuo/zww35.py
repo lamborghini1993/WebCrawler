@@ -39,7 +39,7 @@ class C35ZWW(basecrawler.CWebCrawler):
             return
         oBookName = bs4obj.find("div", id="title")
         sBookName = oBookName.text.replace("全文阅读","")
-        sFileName = "Downlands/%s.txt" % sBookName
+        sFileName = "Downloads/%s.txt" % sBookName
         if os.path.exists(sFileName):
             return
         print("begin %s" % sBookName)
