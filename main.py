@@ -9,12 +9,12 @@
 from budejie import text
 from haowuya import wuduanzi
 from meizitu import meizitu
-
+from xiaoshuo import zww35
 
 def start():
     # obj = text.CText()
     # obj = wuduanzi.WuDuanZi()
-    obj = meizitu.MeiZiTu()
+    obj = zww35.C35ZWW()
     obj.start()
     # obj.resource()
 
