@@ -10,11 +10,12 @@ from budejie import text
 from haowuya import wuduanzi
 from meizitu import meizitu
 from xiaoshuo import zww35
+from movie import imdb250
 
 def start():
     # obj = text.CText()
     # obj = wuduanzi.WuDuanZi()
-    obj = zww35.C35ZWW()
+    obj = imdb250.CIMDB250()
     obj.start()
     # obj.resource()
 
