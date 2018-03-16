@@ -17,8 +17,7 @@ from mytool import pubdefines
 class CWebCrawler(object):
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) \
-            Gecko/20100101 Firefox/57.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0"
     }
     max_try_num = 10
     timeout = 10

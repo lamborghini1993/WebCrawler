@@ -11,11 +11,12 @@ from haowuya import wuduanzi
 from meizitu import meizitu
 from xiaoshuo import zww35
 from movie import imdb250
+from other import dp2980
 
 def start():
     # obj = text.CText()
     # obj = wuduanzi.WuDuanZi()
-    obj = imdb250.CIMDB250()
+    obj = dp2980.CDP2980()
     obj.start()
     # obj.resource()
 
