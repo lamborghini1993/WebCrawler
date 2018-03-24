@@ -3,6 +3,7 @@ pubcode/
 resources/
 */log.txt
 Downloads/
+__pycache__
 
 # 忽略所有的pyc文件
 *.pyc
