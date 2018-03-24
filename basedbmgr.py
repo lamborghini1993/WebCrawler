@@ -10,7 +10,7 @@
 
 import os
 import sqlite3
-from mytool import pubdefines
+from pubcode import pubdefines
 
 
 def get_col_data(value):

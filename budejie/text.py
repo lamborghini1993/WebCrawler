@@ -12,7 +12,7 @@
 import re
 import basecrawler
 import basedbmgr
-from mytool import pubdefines
+from pubcode import pubdefines
 
 TABLE_TEXT = """
 create table if NOT EXISTS {}
