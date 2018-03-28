@@ -4,23 +4,24 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "Run py3 File",
-            "command": "python main.py",
+            "label": "run main",
             "type": "shell",
+            "command": "${config:python.pythonPath} main.py",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new",
-                "focus": true
+            "problemMatcher": []
+        },
+        {
+            "label": "run current",
+            "type": "shell",
+            "command": "${config:python.pythonPath} ${file}",
+            "group": {
+                "kind": "build",
+                "isDefault": true
             },
-            "options": {
-                "env": {
-                    "PYTHONIOENCODING": "gbk"
-                }
-            }
-        }
+            "problemMatcher": []
+        },
     ]
 }
