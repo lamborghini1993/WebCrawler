@@ -17,7 +17,7 @@ def start():
     # obj = text.CText()
     # obj = wuduanzi.WuDuanZi()
     obj = dp2980.CDP2980()
-    obj.start()
+    # obj.start()
     # obj.resource()
 
 

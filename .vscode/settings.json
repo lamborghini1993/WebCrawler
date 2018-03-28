@@ -2,5 +2,6 @@
     "files.exclude": {
         // "**/.vscode": true,
         "mytool/.gitignore": true
-    }
+    },
+    "C_Cpp.intelliSenseEngineFallback": "Disabled"
 }
