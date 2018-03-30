@@ -8,12 +8,6 @@
 
 import os
 
-from budejie import text
-from haowuya import wuduanzi
-from meizitu import meizitu
-from xiaoshuo import zww35
-from movie import imdb250
-from other import dp2980
 
 __version__ = "trunk"
 
@@ -29,6 +23,9 @@ def InitPubCode():
 
 def start():
     InitPubCode()
+    # import my_crawler_1
+    # obj = my_crawler_1.MyCrawler()
+    # obj.Start()
     # obj = text.CText()
     # obj = wuduanzi.WuDuanZi()
     # obj = dp2980.CDP2980()
