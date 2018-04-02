@@ -17,7 +17,10 @@ from pubcode import pubdefines, misc
 
 class MyCrawler(object):
 
-    m_Save = "Downloads/meizitu"
+    m_Flag = "meizitu"
+    m_ConfigDir = "Config"
+    m_DownDir = "Downloads"
+
     m_headers = {
         'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Encoding':'gb2312,utf-8',
@@ -27,20 +30,39 @@ class MyCrawler(object):
     }
     m_MaxNum = 10
     m_DelChar = [" | 妹子图", "（一）", "（二）", "？"]
+    m_WrongChar = r"<>/|:\"*?"
 
     def __init__(self):
         self.m_Page = 1
-        self.m_MaxPage = 8888
+        self.m_MaxPage = 3	#8888
         self.m_Seen = set()
         self.m_Unseen = set()
         self.m_Loop = asyncio.get_event_loop()
         self.m_DownInfo = {}
         self.m_PicNameInfo = {}
+        self._Init()
+        self._Load()
+
+
+    def _Init(self):
+        self.m_DownPath = os.path.join(os.getcwd(), self.m_DownDir, self.m_Flag)
+        self.m_ConfigPath = os.path.join(os.getcwd(), self.m_ConfigDir, self.m_Flag)
+        for sDirPath in (self.m_DownPath, self.m_ConfigPath):
+            if not os.path.exists(sDirPath):
+                os.makedirs(sDirPath)
+        self.m_UrlInfoPath = os.path.join(self.m_ConfigPath, "urlinfo.json")
+        self.m_NameInfoPath = os.path.join(self.m_ConfigPath, "name.json")
+
+
+    def _Load(self):
+        self.m_DownInfo = misc.JsonLoad(self.m_UrlInfoPath, {})
+        self.m_PicNameInfo = misc.JsonLoad(self.m_NameInfoPath, {})
+        print(self.m_PicNameInfo)
 
 
     def _Save(self):
-        misc.JsonDump(self.m_DownInfo, self.m_Save + "meizitu.json")
-        misc.JsonDump(self.m_PicNameInfo, self.m_Save + "name.json")
+        misc.JsonDump(self.m_DownInfo, self.m_UrlInfoPath)
+        misc.JsonDump(self.m_PicNameInfo, self.m_NameInfoPath)
 
 
     def Start(self):
@@ -52,6 +74,14 @@ class MyCrawler(object):
             self._Save()
 
 
+    def ChangeWrongChat(self, txt, default="_"):
+        for char in self.m_WrongChar:
+            if txt.find(char) == -1:
+                continue
+            txt = txt.replace(char, default)
+        return txt
+
+
     def AddUrl(self):
         while self.m_Page < self.m_MaxPage and len(self.m_Unseen) < self.m_MaxNum:
             url = "http://www.meizitu.com/a/%s.html" % str(self.m_Page)
@@ -61,9 +91,7 @@ class MyCrawler(object):
 
 
     async def Run(self):
-        # self.m_Session = aiohttp.ClientSession()
         async with aiohttp.ClientSession() as self.m_Session:
-            # while self.AddUrl() and len(self.m_Unseen):
             while self.AddUrl():
                 if not self.m_Unseen:
                     await asyncio.sleep(0.1)
@@ -71,8 +99,8 @@ class MyCrawler(object):
                 tasks = [self.m_Loop.create_task(self.Crawl(url)) for url in self.m_Unseen]
                 finished, unfinished = await asyncio.wait(tasks)
                 htmls = [f.result() for f in finished]
-                for html in htmls:
-                    await self.Parse(html)
+                for html, url in htmls:
+                    await self.Parse(html, url)
                 if self.m_Page >= self.m_MaxPage:
                     self._Save()
 
@@ -83,22 +111,26 @@ class MyCrawler(object):
         html = await r.text(encoding="gbk")
         self.m_Seen.add(url)
         self.m_Unseen.remove(url)
-        return html
+        return html, url
 
 
-    async def Parse(self, html):
+    async def Parse(self, html, url):
         soup = BeautifulSoup(html, 'lxml')
         for odiv in soup.findAll("div", id="picture") or soup.findAll("div", class_="postContent"):
             oop = odiv.p
             for oimg in oop.findAll("img"):
                 src = oimg.get("src")
                 filename = self._GetPicName(soup, html, oimg)
-                await self.DownPictur(filename, src, html)
+                await self.DownPictur(filename, src, url)
 
 
-    def _Replace(self, sMsg):
+    def _Replace(self, sMsg, default="_"):
         for tmp in self.m_DelChar:
             sMsg = sMsg.replace(tmp, "")
+        for char in self.m_WrongChar:
+            if sMsg.find(char) == -1:
+                continue
+            sMsg = sMsg.replace(char, default)
         return sMsg
 
 
@@ -115,18 +147,18 @@ class MyCrawler(object):
         return filename
 
 
-    async def DownPictur(self, filename, picurl, html):
+    async def DownPictur(self, filename, picurl, url):
         r = await self.m_Session.get(picurl, headers=self.m_headers)
         picdata = await r.read()
-        await self.dowland_pic(filename, picdata, picurl, html)
+        await self.dowland_pic(filename, picdata, picurl, url)
 
 
-    async def dowland_pic(self, filename, picdata, picurl, html):
-        filepath = os.path.join(self.m_Save, filename)
+    async def dowland_pic(self, filename, picdata, picurl, url):
+        filepath = os.path.join(self.m_DownPath, filename)
         if os.path.exists(filepath):
             return
         print("%s ——> %s" % (picurl, filename))
         with open(filepath, "wb") as fpic:
             fpic.write(picdata)
-        dInfo = self.m_DownInfo.setdefault(html, {})
+        dInfo = self.m_DownInfo.setdefault(url, {})
         dInfo[picurl] = filename

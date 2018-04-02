@@ -8,6 +8,7 @@
 
 import os
 
+from crawler import meizitu
 
 __version__ = "trunk"
 
@@ -23,14 +24,8 @@ def InitPubCode():
 
 def start():
     InitPubCode()
-    # import my_crawler_1
-    # obj = my_crawler_1.MyCrawler()
-    # obj.Start()
-    # obj = text.CText()
-    # obj = wuduanzi.WuDuanZi()
-    # obj = dp2980.CDP2980()
-    # obj.start()
-    # obj.resource()
+    obj = meizitu.MyCrawler()
+    obj.Start()
 
 
 if __name__ == "__main__":
