@@ -57,7 +57,6 @@ class MyCrawler(object):
     def _Load(self):
         self.m_DownInfo = misc.JsonLoad(self.m_UrlInfoPath, {})
         self.m_PicNameInfo = misc.JsonLoad(self.m_NameInfoPath, {})
-        print(self.m_PicNameInfo)
 
 
     def _Save(self):
