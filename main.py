@@ -9,6 +9,8 @@
 import os
 
 from crawler import meizitu
+from crawler import zww35
+from crawler import shubao888
 
 __version__ = "trunk"
 
@@ -24,7 +26,8 @@ def InitPubCode():
 
 def start():
     InitPubCode()
-    obj = meizitu.MyCrawler()
+    # obj = meizitu.MyCrawler()
+    obj = zww35.CZww35()
     obj.Start()
 
 
