@@ -16,7 +16,9 @@ class CPubCrawler(object):
     m_Flag = ""
     m_MaxNum = 10
     m_Encoding = "utf-8"
-    m_WaitingUrl = []
+    m_WaitingUrl = set()
+    m_ReadyUrl = set()
+    m_DoingUrl = set()
 
     m_WrongChar = r"<>/|:\"*?"
     m_ConfigDir = "Config"
@@ -30,11 +32,11 @@ class CPubCrawler(object):
     }
 
     def __init__(self):
-        self.m_CrawlerUrl = []
         self.m_Run = True
         self.m_Loop = asyncio.get_event_loop()
         self.m_DownInfo = {}
         self._Init()
+        self._CustomInit()
 
 
     def _Init(self):
@@ -46,6 +48,10 @@ class CPubCrawler(object):
         self.m_DownInfoPath = os.path.join(self.m_ConfigPath, "downland.json")
 
 
+    def _CustomInit(self):
+        pass
+
+
     def _Load(self):
         self.m_DownInfo = misc.JsonLoad(self.m_DownInfoPath, {})
 
@@ -55,12 +61,12 @@ class CPubCrawler(object):
 
 
     def Start(self):
-        try:
-            self.m_Loop.run_until_complete(self.Run())
-            self.m_Loop.close()
-        except Exception as e:
-            print(e)
-            self._Save()
+        # try:
+        self.m_Loop.run_until_complete(self.Run())
+        self.m_Loop.close()
+        # except Exception as e:
+        #     print(e)
+        #     self._Save()
 
 
     def _Replace(self, sMsg, default="_"):
@@ -70,28 +76,53 @@ class CPubCrawler(object):
             sMsg = sMsg.replace(char, default)
         return sMsg
 
+    def Print(self, msg):
+        return
+        print(msg, self.m_WaitingUrl, self.m_ReadyUrl, self.m_DoingUrl)
 
     def NewCrawel(self):
-        while len(self.m_CrawlerUrl) < self.m_MaxNum and self.m_WaitingUrl:
-            self.m_CrawlerUrl.append(self.m_WaitingUrl.pop(0))
+        self.m_WaitingUrl = set(sorted(self.m_WaitingUrl, key=lambda x: x[1], reverse=True))
+        self.Print("1")
+        while (len(self.m_ReadyUrl) + len(self.m_DoingUrl)) < self.m_MaxNum and self.m_WaitingUrl:
+            self.m_ReadyUrl.add(self.m_WaitingUrl.pop())
+            self.Print("2")
         return True
 
 
     async def Run(self):
         async with aiohttp.ClientSession() as self.m_Session:
-            while self.m_Run and self.NewCrawel() and len(self.m_CrawlerUrl):
-                tasks = [self.m_Loop.create_task(self.Crawl(url, *args)) for url, *args in self.m_CrawlerUrl]
+            while self.NewCrawel() and (len(self.m_ReadyUrl) + len(self.m_DoingUrl)):
+                self.Print("3")
+                if not self.m_ReadyUrl:
+                    await asyncio.sleep(0.1)
+                    continue
+
+                # tasks = []
+                # for tInfo in self.m_ReadyUrl:
+                #     oTask = self.m_Loop.create_task(self.Crawl(tInfo))
+                #     tasks.append(oTask)
+                #     self.m_DoingUrl.add(tInfo)
+
+                tasks = [self.m_Loop.create_task(self.Crawl(tInfo)) for tInfo in self.m_ReadyUrl]
+
+                self.m_DoingUrl.update(self.m_ReadyUrl)
+                self.m_ReadyUrl.clear()
+
                 finished, unfinished = await asyncio.wait(tasks)
+                if unfinished:
+                    print("="*20, unfinished)
                 htmls = [f.result() for f in finished]
-                for html, url in htmls:
-                    await self.Parse(html, url)
+                for html, tInfo in htmls:
+                    await self.Parse(html, tInfo)
+            self._Save()
 
 
-    async def Crawl(self, url, *args):
+    async def Crawl(self, tInfo):
+        url, *args = tInfo
         r = await self.m_Session.get(url, headers=self.m_headers)
         html = await r.text(encoding=self.m_Encoding)
-        return html, url
+        return html, tInfo
 
 
     async def Parse(self, html, url):
-        self.m_CrawlerUrl.remove(url)
+        self.m_ReadyUrl.remove(url)
