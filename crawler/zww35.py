@@ -40,10 +40,6 @@ class CZww35(pubcrawler.CPubCrawler):
             self.m_WaitingUrl[pageurl] = dPageInfo
 
 
-    def _Save(self):
-        pass
-
-
     async def Parse(self, url, dInfo, html):
         iType = dInfo["priority"]
         if iType == 0:
@@ -61,16 +57,19 @@ class CZww35(pubcrawler.CPubCrawler):
             if oA.has_attr("style"):
                 continue
             bookurl = self.m_Url + oA.get("href")
-            allBookUrl.append(bookurl)
 
+            if bookurl in self.m_DoneInfo:
+                continue
+            if bookurl in allBookUrl:
+                continue
+
+            allBookUrl.append(bookurl)
             dBookInfo = {
                 "priority"  :1,
                 "parent"    :pageurl,
             }
             self.m_WaitingUrl[bookurl] = dBookInfo
             # print("Add Book url ", bookurl)
-            self.Print("4")
-            break   #TODO
         
         del self.m_DoingUrl[pageurl]
         # self.m_DoneInfo[pageurl] = self.m_DoingUrl.pop(pageurl)
@@ -80,19 +79,27 @@ class CZww35(pubcrawler.CPubCrawler):
     async def ParseBook(self, bookurl, dBookInfo, html):
         soup = BeautifulSoup(html, 'lxml')
         sTitle = soup.find("div", {"id":"title"}).h1.text
+        dBookInfo["title"] = sTitle
         oDetails = soup.find("div", {"id":"details"})
         sAuthor = oDetails.find("a", {"href":re.compile("/author/*")}).text
         oLastUrl = oDetails.find("a", {"href":re.compile("\d+.html")})
         sLastUrl = bookurl + oLastUrl.get("href")
-        dBookInfo["title"] = sTitle
         dBookInfo["author"] = sAuthor
         dBookInfo["latest_chapter_url"] = sLastUrl
+
+        oType = soup.find("div", {"id":"indexsidebar"})
+        sType = oType.find("a", {"href":re.compile(".*htm")}).text
+        dBookInfo["type"] = sType
 
         allChapterUrl = dBookInfo.setdefault("allurl", [])
         for oA in soup.findAll("a", {"href":re.compile("\d+.html")}):
             if not oA.has_attr("title"):
                 continue
             chapterurl = bookurl + oA.get("href")
+
+            if chapterurl in allChapterUrl:
+                continue
+
             allChapterUrl.append(chapterurl)
             dChapterInfo = {
                 "priority"  :2,
@@ -100,12 +107,9 @@ class CZww35(pubcrawler.CPubCrawler):
             }
             # print("Add Chapter url ", chapterurl)
             self.m_WaitingUrl[chapterurl] = dChapterInfo
-            
-            if (len(allChapterUrl) > 10):
-                break
 
         self.m_DoneInfo[bookurl] = self.m_DoingUrl.pop(bookurl)
-        print("Book Done ", sTitle, bookurl, len(allChapterUrl))
+        print("Book Done ", sType, sTitle, bookurl, len(allChapterUrl))
 
 
     async def ParseChapter(self, chapterurl, dChapterInfo, html):
@@ -131,12 +135,23 @@ class CZww35(pubcrawler.CPubCrawler):
         dBookInfo = self.m_DoneInfo[bookurl]
         lstAllUrl = dBookInfo["allurl"]
         sTitle = dBookInfo["title"]
-        while lstAllUrl and lstAllUrl[0] in self.m_DoneInfo:
-            chapterurl = lstAllUrl.pop(0)
-            dChapterInfo = self.m_DoneInfo.pop(chapterurl)
-            sChapterTitle = dChapterInfo["chapter_title"]
-            # TODO:写文件
-            print("write to book:", sTitle, sChapterTitle)
+        sType = dBookInfo["type"]
+        sDir = os.path.join(self.m_DownPath, sType)
+        if not os.path.exists(sDir):
+            os.makedirs(sDir)
+        sFilePath = os.path.join(sDir, sTitle + ".txt")
+        with open(sFilePath, "a+", encoding="utf-8") as fp:
+            while lstAllUrl and lstAllUrl[0] in self.m_DoneInfo:
+                chapterurl = lstAllUrl.pop(0)
+                dChapterInfo = self.m_DoneInfo.pop(chapterurl)
+                sChapterTitle = dChapterInfo["chapter_title"]
+                sText = dChapterInfo["text"]
+
+                fp.writelines("=============%s=============\n" % sChapterTitle)
+                fp.writelines(sText)
+                fp.writelines("\n"*8)
+
+                print("write to book:", sTitle, sType, sChapterTitle)
 
         if not lstAllUrl:   # 全部下载完毕
             dNewBookInfo = {

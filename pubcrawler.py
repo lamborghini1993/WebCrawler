@@ -14,12 +14,9 @@ from pubcode import misc
 
 class CPubCrawler(object):
     m_Flag = ""
-    m_MaxNum = 10
+    m_MaxNum = 100
     m_Encoding = "utf-8"
-    m_WaitingUrl = {}
-    m_ReadyUrl = {}
-    m_DoingUrl = {}
-    m_DoneInfo = {}
+    
 
     m_WrongChar = r"<>/|:\"*?"
     m_ConfigDir = "Config"
@@ -33,11 +30,14 @@ class CPubCrawler(object):
     }
 
     def __init__(self):
-        self.m_Run = True
+        self.m_WaitingUrl = {}
+        self.m_ReadyUrl = {}
+        self.m_DoingUrl = {}
+        self.m_DoneInfo = {}
         self.m_Loop = asyncio.get_event_loop()
-        self.m_XXOO = {}
         self._Init()
         self._CustomInit()
+        self._Load()
 
 
     def _Init(self):
@@ -46,7 +46,13 @@ class CPubCrawler(object):
         for sDirPath in (self.m_DownPath, self.m_ConfigPath):
             if not os.path.exists(sDirPath):
                 os.makedirs(sDirPath)
-        self.m_DownInfoPath = os.path.join(self.m_ConfigPath, "downland.json")
+        
+        self.m_WaitingConfigPath = os.path.join(self.m_ConfigPath, "Waiting.json")
+        self.m_ReadyConfigPath = os.path.join(self.m_ConfigPath, "Ready.json")
+        self.m_DoingConfigPath = os.path.join(self.m_ConfigPath, "Doing.json")
+        self.m_DoneInfoConfigPath = os.path.join(self.m_ConfigPath, "DoneInfo.json")
+
+        self.m_ErrorPath = os.path.join(self.m_ConfigPath, "err.txt")
 
 
     def _CustomInit(self):
@@ -54,20 +60,33 @@ class CPubCrawler(object):
 
 
     def _Load(self):
-        self.m_XXOO = misc.JsonLoad(self.m_DownInfoPath, {})
+        self.m_WaitingUrl = misc.JsonLoad(self.m_WaitingConfigPath, {})
+        self.m_ReadyUrl = misc.JsonLoad(self.m_ReadyConfigPath, {})
+        self.m_DoingUrl = misc.JsonLoad(self.m_DoingConfigPath, {})
+        self.m_DoneInfo = misc.JsonLoad(self.m_DoneInfoConfigPath, {})
+
+        self.m_WaitingUrl.update(self.m_ReadyUrl)
+        self.m_WaitingUrl.update(self.m_DoingUrl)
+        self.m_ReadyUrl.clear()
+        self.m_DoingUrl.clear()
+        print(len(self.m_DoneInfo))
 
 
     def _Save(self):
-        misc.JsonDump(self.m_XXOO, self.m_DownInfoPath)
+        misc.JsonDump(self.m_WaitingUrl, self.m_WaitingConfigPath)
+        misc.JsonDump(self.m_ReadyUrl, self.m_ReadyConfigPath)
+        misc.JsonDump(self.m_DoingUrl, self.m_DoingConfigPath)
+        misc.JsonDump(self.m_DoneInfo, self.m_DoneInfoConfigPath)
 
 
     def Start(self):
-        # try:
-        self.m_Loop.run_until_complete(self.Run())
-        self.m_Loop.close()
-        # except Exception as e:
-        #     print(e)
-        #     self._Save()
+        try:
+            self.m_Loop.run_until_complete(self.Run())
+            self.m_Loop.close()
+        except Exception as e:
+            info = misc.GetTraceText(str(e))
+            misc.Write2File(self.m_ErrorPath, "\n\t".join(info))
+        self._Save()
         print(self.m_DoneInfo)
 
 
