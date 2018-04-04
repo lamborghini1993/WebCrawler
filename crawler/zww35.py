@@ -64,7 +64,7 @@ class CZww35(pubcrawler.CPubCrawler):
             self.m_WaitingUrl.add(tInfo)
             print(title, bookurl, self.m_WaitingUrl)
             self.Print("4")
-            break
+            break   #TODO
 
 
     async def ParseBook(self, html, bookurl, *args):
@@ -76,17 +76,18 @@ class CZww35(pubcrawler.CPubCrawler):
         for oA in soup.findAll("a", {"href":re.compile("\d+.html")}):
             if not oA.has_attr("title"):
                 continue
-            chapterurl = self.m_Url + oA.get("href")
+            chapterurl = bookurl + oA.get("href")
             lstDoing.append(chapterurl)
-            tInfo = (chapterurl, 2, bookurl, title, chapterurl)
+            tInfo = (chapterurl, 2, bookurl, title, pageurl)
             self.m_WaitingUrl.add(tInfo)
         print(len(lstDoing))
 
 
     async def ParseChapter(self, html, chapterurl, *args):
-        bookurl, title, chapterurl = args
+        bookurl, title, pageurl = args
         soup = BeautifulSoup(html, 'lxml')
         oScript = soup.find("div", id="content")
+        print("90:", chapterurl)
         sText = oScript.text.replace("    ", "\n")
         for sDel in lstDel:
             sText = sText.replace(sDel+"\n", "")
@@ -104,6 +105,6 @@ class CZww35(pubcrawler.CPubCrawler):
                 fp.writelines("\n"*8)
             tInfo = (chapterurl, 2, bookurl, title, chapterurl)
             self.m_DoingUrl.remove(tInfo)
-
+            print("%s done" % chapterurl)
         if not lstDoing:
             self.m_DoingUrl.remove(bookurl)

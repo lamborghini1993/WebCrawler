@@ -77,13 +77,14 @@ class CPubCrawler(object):
         return sMsg
 
     def Print(self, msg):
-        return
-        print(msg, self.m_WaitingUrl, self.m_ReadyUrl, self.m_DoingUrl)
+        # return
+        print(msg, len(self.m_WaitingUrl), len(self.m_ReadyUrl), len(self.m_DoingUrl))
 
     def NewCrawel(self):
         self.m_WaitingUrl = set(sorted(self.m_WaitingUrl, key=lambda x: x[1], reverse=True))
         self.Print("1")
-        while (len(self.m_ReadyUrl) + len(self.m_DoingUrl)) < self.m_MaxNum and self.m_WaitingUrl:
+        # while (len(self.m_ReadyUrl) + len(self.m_DoingUrl)) < self.m_MaxNum and self.m_WaitingUrl:
+        while (len(self.m_ReadyUrl) ) < self.m_MaxNum and self.m_WaitingUrl:
             self.m_ReadyUrl.add(self.m_WaitingUrl.pop())
             self.Print("2")
         return True
@@ -91,7 +92,8 @@ class CPubCrawler(object):
 
     async def Run(self):
         async with aiohttp.ClientSession() as self.m_Session:
-            while self.NewCrawel() and (len(self.m_ReadyUrl) + len(self.m_DoingUrl)):
+            # while self.NewCrawel() and (len(self.m_ReadyUrl) + len(self.m_DoingUrl)):
+            while self.NewCrawel() and (len(self.m_WaitingUrl) + len(self.m_ReadyUrl)):
                 self.Print("3")
                 if not self.m_ReadyUrl:
                     await asyncio.sleep(0.1)
