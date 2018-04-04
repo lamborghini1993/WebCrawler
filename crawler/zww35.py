@@ -11,6 +11,7 @@ import pubcrawler
 import re
 import os
 
+from pubcode import misc
 from bs4 import BeautifulSoup
 
 DEL_LINE = [
@@ -34,10 +35,16 @@ class CZww35(pubcrawler.CPubCrawler):
 
     def _CustomInit(self):
         # for x in range(2146):
-        for x in range(1):
+        for x in range(10):
             pageurl = self.m_Example + str(x) + ".htm"
             dPageInfo = {"priority":0}
             self.m_WaitingUrl[pageurl] = dPageInfo
+
+
+    def _Replace(self, sMsg, default="_"):
+        sMsg = super(CZww35, self)._Replace(sMsg, default)
+        sMsg = sMsg.replace("全文阅读", "")
+        return sMsg
 
 
     async def Parse(self, url, dInfo, html):
@@ -73,12 +80,14 @@ class CZww35(pubcrawler.CPubCrawler):
         
         del self.m_DoingUrl[pageurl]
         # self.m_DoneInfo[pageurl] = self.m_DoingUrl.pop(pageurl)
-        print("Page Done ", pageurl, len(allBookUrl))
+
+        print("本页【%s】爬取完毕, 共需爬取%s本书籍" % (pageurl, len(allBookUrl)))
 
 
     async def ParseBook(self, bookurl, dBookInfo, html):
         soup = BeautifulSoup(html, 'lxml')
         sTitle = soup.find("div", {"id":"title"}).h1.text
+        sTitle = self._Replace(sTitle)
         dBookInfo["title"] = sTitle
         oDetails = soup.find("div", {"id":"details"})
         sAuthor = oDetails.find("a", {"href":re.compile("/author/*")}).text
@@ -109,12 +118,22 @@ class CZww35(pubcrawler.CPubCrawler):
             self.m_WaitingUrl[chapterurl] = dChapterInfo
 
         self.m_DoneInfo[bookurl] = self.m_DoingUrl.pop(bookurl)
-        print("Book Done ", sType, sTitle, bookurl, len(allChapterUrl))
+        print("本书【%s/%s】爬取完毕, 共需爬取%s章节" % (sType, sTitle, len(allChapterUrl)))
 
 
     async def ParseChapter(self, chapterurl, dChapterInfo, html):
+        bookurl = dChapterInfo["parent"]
         soup = BeautifulSoup(html, 'lxml')
-        sChapterTitle = soup.find("div", {"id":"title"}).h1.text
+        oDiv = soup.find("div", {"id":"title"})
+        if not oDiv:
+            misc.Write2File(self.m_LogPath, "%s %s" % (chapterurl, dChapterInfo))
+            self.m_DoingUrl.pop(chapterurl)
+            lstAllUrl = self.m_DoneInfo[bookurl]["allurl"]
+            if chapterurl in lstAllUrl:
+                lstAllUrl.remove(chapterurl)
+            self.CheckWriteBook(bookurl)
+            return
+        sChapterTitle = oDiv.h1.text
 
         oScript = soup.find("div", id="content")
         sText = oScript.text.replace("    ", "\n")
@@ -126,9 +145,9 @@ class CZww35(pubcrawler.CPubCrawler):
         dChapterInfo["chapter_title"] = sChapterTitle
 
         self.m_DoneInfo[chapterurl] = self.m_DoingUrl.pop(chapterurl)
-        print("Chapter Done ", sChapterTitle, chapterurl)
+        print("\t本章节%s爬取完毕" % (sChapterTitle))
 
-        self.CheckWriteBook(dChapterInfo["parent"])
+        self.CheckWriteBook(bookurl)
 
 
     def CheckWriteBook(self, bookurl):
@@ -150,8 +169,7 @@ class CZww35(pubcrawler.CPubCrawler):
                 fp.writelines("=============%s=============\n" % sChapterTitle)
                 fp.writelines(sText)
                 fp.writelines("\n"*8)
-
-                print("write to book:", sTitle, sType, sChapterTitle)
+                print("\t%s章节已写入到%s/%s中", sChapterTitle, sType, sTitle)
 
         if not lstAllUrl:   # 全部下载完毕
             dNewBookInfo = {
@@ -159,21 +177,5 @@ class CZww35(pubcrawler.CPubCrawler):
                 "latest_chapter_url"    :dBookInfo["latest_chapter_url"]
             }
             self.m_DoneInfo[bookurl] = dNewBookInfo
-            print("%s all done" % sTitle)
+            print("%s.txt 下载完毕" % sTitle)
 
-
-        # lstDoing = self.m_XXOO[bookurl]
-        # self.m_XXOO[chapterurl] = sText
-
-        # while lstDoing and lstDoing[0] in self.m_XXOO:
-        #     chapterurl = lstDoing.pop(0)
-        #     sText = self.m_XXOO.pop(chapterurl)
-        #     path = os.path.join(self.m_DownPath, title + ".txt")
-        #     with open(path, "w+", encoding="utf-8") as fp:
-        #         fp.writelines(sText)
-        #         fp.writelines("\n"*8)
-        #     tInfo = (chapterurl, 2, bookurl, title, chapterurl)
-        #     self.m_DoingUrl.remove(tInfo)
-        #     print("%s done" % chapterurl)
-        # if not lstDoing:
-        #     self.m_DoingUrl.remove(bookurl)

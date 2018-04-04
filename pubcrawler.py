@@ -14,7 +14,7 @@ from pubcode import misc
 
 class CPubCrawler(object):
     m_Flag = ""
-    m_MaxNum = 100
+    m_MaxNum = 1000
     m_Encoding = "utf-8"
     
 
@@ -36,8 +36,8 @@ class CPubCrawler(object):
         self.m_DoneInfo = {}
         self.m_Loop = asyncio.get_event_loop()
         self._Init()
-        self._CustomInit()
         self._Load()
+        self._CustomInit()
 
 
     def _Init(self):
@@ -52,7 +52,8 @@ class CPubCrawler(object):
         self.m_DoingConfigPath = os.path.join(self.m_ConfigPath, "Doing.json")
         self.m_DoneInfoConfigPath = os.path.join(self.m_ConfigPath, "DoneInfo.json")
 
-        self.m_ErrorPath = os.path.join(self.m_ConfigPath, "err.txt")
+        self.m_ErrorPath = os.path.join(self.m_ConfigPath, "error")
+        self.m_LogPath = os.path.join(self.m_ConfigPath, "log")
 
 
     def _CustomInit(self):
@@ -69,7 +70,7 @@ class CPubCrawler(object):
         self.m_WaitingUrl.update(self.m_DoingUrl)
         self.m_ReadyUrl.clear()
         self.m_DoingUrl.clear()
-        print(len(self.m_DoneInfo))
+        self.DebugPrint("_Load")
 
 
     def _Save(self):
@@ -80,14 +81,16 @@ class CPubCrawler(object):
 
 
     def Start(self):
+        self.DebugPrint("Start_Begin")
         try:
             self.m_Loop.run_until_complete(self.Run())
             self.m_Loop.close()
         except Exception as e:
-            info = misc.GetTraceText(str(e))
-            misc.Write2File(self.m_ErrorPath, "\n\t".join(info))
+            info = misc.PythonError(str(e))
+            misc.Write2File(self.m_ErrorPath, info)
+
         self._Save()
-        print(self.m_DoneInfo)
+        self.DebugPrint("Start_End")
 
 
     def _Replace(self, sMsg, default="_"):
@@ -97,9 +100,10 @@ class CPubCrawler(object):
             sMsg = sMsg.replace(char, default)
         return sMsg
 
-    def Print(self, msg):
-        return
-        print(msg, len(self.m_WaitingUrl), len(self.m_ReadyUrl), len(self.m_DoingUrl))
+
+    def DebugPrint(self, msg):
+        print(msg, len(self.m_WaitingUrl), len(self.m_ReadyUrl), len(self.m_DoingUrl), len(self.m_DoneInfo))
+
 
     def NewCrawel(self):
         tInfo = []
@@ -118,8 +122,8 @@ class CPubCrawler(object):
     async def Run(self):
         async with aiohttp.ClientSession() as self.m_Session:
             # while self.NewCrawel() and (len(self.m_ReadyUrl) + len(self.m_DoingUrl)):
-            while self.NewCrawel() and (len(self.m_WaitingUrl) + len(self.m_ReadyUrl)):
-                self.Print("3")
+            while self.NewCrawel() and (len(self.m_WaitingUrl) + len(self.m_ReadyUrl) + len(self.m_DoingUrl)):
+                self.DebugPrint("Run")
                 if not self.m_ReadyUrl:
                     await asyncio.sleep(0.1)
                     continue
