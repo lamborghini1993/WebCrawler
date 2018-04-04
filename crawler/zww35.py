@@ -13,7 +13,7 @@ import os
 
 from bs4 import BeautifulSoup
 
-lstDel = [
+DEL_LINE = [
     "read_content_up();",
     "三↑五↑中↑文↑网",
     "ｗww.35ｚww.ｃom，更新最快的无弹窗小说网！",
@@ -35,76 +35,130 @@ class CZww35(pubcrawler.CPubCrawler):
     def _CustomInit(self):
         # for x in range(2146):
         for x in range(1):
-            url = self.m_Example + str(x) + ".htm"
-            tInfo = (url, 0)
-            self.m_WaitingUrl.add(tInfo)
+            pageurl = self.m_Example + str(x) + ".htm"
+            dPageInfo = {"priority":0}
+            self.m_WaitingUrl[pageurl] = dPageInfo
 
 
     def _Save(self):
         pass
 
-    async def Parse(self, html, tInfo):
-        url, sType, *args = tInfo
-        if sType == 0:
-            await self.ParsePage(html, url, *args)
-        elif sType == 1:
-            await self.ParseBook(html, url, *args)
-        elif sType == 2:
-            await self.ParseChapter(html, url, *args)
-            
 
-    async def ParsePage(self, html, pageurl, *args):
+    async def Parse(self, url, dInfo, html):
+        iType = dInfo["priority"]
+        if iType == 0:
+            await self.ParsePage(url, dInfo, html)
+        elif iType == 1:
+            await self.ParseBook(url, dInfo, html)
+        elif iType == 2:
+            await self.ParseChapter(url, dInfo, html)
+
+
+    async def ParsePage(self, pageurl, dPageInfo, html):
         soup = BeautifulSoup(html, 'lxml')
+        allBookUrl = dPageInfo.setdefault("allurl", [])
         for oA in soup.findAll("a", {"href":re.compile("/35zwhtml/\d+/\d+/$")}):
             if oA.has_attr("style"):
                 continue
             bookurl = self.m_Url + oA.get("href")
-            title = oA.text
-            tInfo = (bookurl, 1, pageurl, title)
-            self.m_WaitingUrl.add(tInfo)
-            print(title, bookurl, self.m_WaitingUrl)
+            allBookUrl.append(bookurl)
+
+            dBookInfo = {
+                "priority"  :1,
+                "parent"    :pageurl,
+            }
+            self.m_WaitingUrl[bookurl] = dBookInfo
+            # print("Add Book url ", bookurl)
             self.Print("4")
             break   #TODO
+        
+        del self.m_DoingUrl[pageurl]
+        # self.m_DoneInfo[pageurl] = self.m_DoingUrl.pop(pageurl)
+        print("Page Done ", pageurl, len(allBookUrl))
 
 
-    async def ParseBook(self, html, bookurl, *args):
-        pageurl, title = args
+    async def ParseBook(self, bookurl, dBookInfo, html):
         soup = BeautifulSoup(html, 'lxml')
-        lstDoing = self.m_DownInfo.setdefault(bookurl, [])
-        otitle = soup.find("div", {"id":"title"})
-        print(otitle)
+        sTitle = soup.find("div", {"id":"title"}).h1.text
+        oDetails = soup.find("div", {"id":"details"})
+        sAuthor = oDetails.find("a", {"href":re.compile("/author/*")}).text
+        oLastUrl = oDetails.find("a", {"href":re.compile("\d+.html")})
+        sLastUrl = bookurl + oLastUrl.get("href")
+        dBookInfo["title"] = sTitle
+        dBookInfo["author"] = sAuthor
+        dBookInfo["latest_chapter_url"] = sLastUrl
+
+        allChapterUrl = dBookInfo.setdefault("allurl", [])
         for oA in soup.findAll("a", {"href":re.compile("\d+.html")}):
             if not oA.has_attr("title"):
                 continue
             chapterurl = bookurl + oA.get("href")
-            lstDoing.append(chapterurl)
-            tInfo = (chapterurl, 2, bookurl, title, pageurl)
-            self.m_WaitingUrl.add(tInfo)
-        print(len(lstDoing))
+            allChapterUrl.append(chapterurl)
+            dChapterInfo = {
+                "priority"  :2,
+                "parent"    :bookurl,
+            }
+            # print("Add Chapter url ", chapterurl)
+            self.m_WaitingUrl[chapterurl] = dChapterInfo
+            
+            if (len(allChapterUrl) > 10):
+                break
+
+        self.m_DoneInfo[bookurl] = self.m_DoingUrl.pop(bookurl)
+        print("Book Done ", sTitle, bookurl, len(allChapterUrl))
 
 
-    async def ParseChapter(self, html, chapterurl, *args):
-        bookurl, title, pageurl = args
+    async def ParseChapter(self, chapterurl, dChapterInfo, html):
         soup = BeautifulSoup(html, 'lxml')
+        sChapterTitle = soup.find("div", {"id":"title"}).h1.text
+
         oScript = soup.find("div", id="content")
-        print("90:", chapterurl)
         sText = oScript.text.replace("    ", "\n")
-        for sDel in lstDel:
+        for sDel in DEL_LINE:
             sText = sText.replace(sDel+"\n", "")
             sText = sText.replace(sDel, "")
 
-        lstDoing = self.m_DownInfo[bookurl]
-        self.m_DownInfo[chapterurl] = sText
+        dChapterInfo["text"] = sText
+        dChapterInfo["chapter_title"] = sChapterTitle
 
-        while lstDoing and lstDoing[0] in self.m_DownInfo:
-            chapterurl = lstDoing.pop(0)
-            sText = self.m_DownInfo.pop(chapterurl)
-            path = os.path.join(self.m_DownPath, title + ".txt")
-            with open(path, "w+", encoding="utf-8") as fp:
-                fp.writelines(sText)
-                fp.writelines("\n"*8)
-            tInfo = (chapterurl, 2, bookurl, title, chapterurl)
-            self.m_DoingUrl.remove(tInfo)
-            print("%s done" % chapterurl)
-        if not lstDoing:
-            self.m_DoingUrl.remove(bookurl)
+        self.m_DoneInfo[chapterurl] = self.m_DoingUrl.pop(chapterurl)
+        print("Chapter Done ", sChapterTitle, chapterurl)
+
+        self.CheckWriteBook(dChapterInfo["parent"])
+
+
+    def CheckWriteBook(self, bookurl):
+        dBookInfo = self.m_DoneInfo[bookurl]
+        lstAllUrl = dBookInfo["allurl"]
+        sTitle = dBookInfo["title"]
+        while lstAllUrl and lstAllUrl[0] in self.m_DoneInfo:
+            chapterurl = lstAllUrl.pop(0)
+            dChapterInfo = self.m_DoneInfo.pop(chapterurl)
+            sChapterTitle = dChapterInfo["chapter_title"]
+            # TODO:写文件
+            print("write to book:", sTitle, sChapterTitle)
+
+        if not lstAllUrl:   # 全部下载完毕
+            dNewBookInfo = {
+                "statue"            :True,
+                "latest_chapter_url"    :dBookInfo["latest_chapter_url"]
+            }
+            self.m_DoneInfo[bookurl] = dNewBookInfo
+            print("%s all done" % sTitle)
+
+
+        # lstDoing = self.m_XXOO[bookurl]
+        # self.m_XXOO[chapterurl] = sText
+
+        # while lstDoing and lstDoing[0] in self.m_XXOO:
+        #     chapterurl = lstDoing.pop(0)
+        #     sText = self.m_XXOO.pop(chapterurl)
+        #     path = os.path.join(self.m_DownPath, title + ".txt")
+        #     with open(path, "w+", encoding="utf-8") as fp:
+        #         fp.writelines(sText)
+        #         fp.writelines("\n"*8)
+        #     tInfo = (chapterurl, 2, bookurl, title, chapterurl)
+        #     self.m_DoingUrl.remove(tInfo)
+        #     print("%s done" % chapterurl)
+        # if not lstDoing:
+        #     self.m_DoingUrl.remove(bookurl)

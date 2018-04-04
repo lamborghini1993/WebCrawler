@@ -16,9 +16,10 @@ class CPubCrawler(object):
     m_Flag = ""
     m_MaxNum = 10
     m_Encoding = "utf-8"
-    m_WaitingUrl = set()
-    m_ReadyUrl = set()
-    m_DoingUrl = set()
+    m_WaitingUrl = {}
+    m_ReadyUrl = {}
+    m_DoingUrl = {}
+    m_DoneInfo = {}
 
     m_WrongChar = r"<>/|:\"*?"
     m_ConfigDir = "Config"
@@ -34,7 +35,7 @@ class CPubCrawler(object):
     def __init__(self):
         self.m_Run = True
         self.m_Loop = asyncio.get_event_loop()
-        self.m_DownInfo = {}
+        self.m_XXOO = {}
         self._Init()
         self._CustomInit()
 
@@ -53,11 +54,11 @@ class CPubCrawler(object):
 
 
     def _Load(self):
-        self.m_DownInfo = misc.JsonLoad(self.m_DownInfoPath, {})
+        self.m_XXOO = misc.JsonLoad(self.m_DownInfoPath, {})
 
 
     def _Save(self):
-        misc.JsonDump(self.m_DownInfo, self.m_DownInfoPath)
+        misc.JsonDump(self.m_XXOO, self.m_DownInfoPath)
 
 
     def Start(self):
@@ -67,6 +68,7 @@ class CPubCrawler(object):
         # except Exception as e:
         #     print(e)
         #     self._Save()
+        print(self.m_DoneInfo)
 
 
     def _Replace(self, sMsg, default="_"):
@@ -77,16 +79,20 @@ class CPubCrawler(object):
         return sMsg
 
     def Print(self, msg):
-        # return
+        return
         print(msg, len(self.m_WaitingUrl), len(self.m_ReadyUrl), len(self.m_DoingUrl))
 
     def NewCrawel(self):
-        self.m_WaitingUrl = set(sorted(self.m_WaitingUrl, key=lambda x: x[1], reverse=True))
-        self.Print("1")
-        # while (len(self.m_ReadyUrl) + len(self.m_DoingUrl)) < self.m_MaxNum and self.m_WaitingUrl:
-        while (len(self.m_ReadyUrl) ) < self.m_MaxNum and self.m_WaitingUrl:
-            self.m_ReadyUrl.add(self.m_WaitingUrl.pop())
-            self.Print("2")
+        tInfo = []
+        for url, dInfo in self.m_WaitingUrl.items():
+            iType = dInfo["priority"]
+            tInfo.append((url, iType))
+        tInfo = sorted(tInfo, key=lambda x: x[1], reverse=True)
+
+        # while (len(self.m_ReadyUrl) + len(self.m_DoingUrl)) < self.m_MaxNum and tInfo:
+        while (len(self.m_ReadyUrl) ) < self.m_MaxNum and tInfo:
+            url, _ = tInfo.pop(0)
+            self.m_ReadyUrl[url] = self.m_WaitingUrl.pop(url)
         return True
 
 
@@ -99,13 +105,12 @@ class CPubCrawler(object):
                     await asyncio.sleep(0.1)
                     continue
 
-                # tasks = []
-                # for tInfo in self.m_ReadyUrl:
-                #     oTask = self.m_Loop.create_task(self.Crawl(tInfo))
-                #     tasks.append(oTask)
-                #     self.m_DoingUrl.add(tInfo)
+                tasks = []
+                for url, dInfo in self.m_ReadyUrl.items():
+                    oTask = self.m_Loop.create_task(self.Crawl(url, dInfo))
+                    tasks.append(oTask)
 
-                tasks = [self.m_Loop.create_task(self.Crawl(tInfo)) for tInfo in self.m_ReadyUrl]
+                # tasks = [self.m_Loop.create_task(self.Crawl(tInfo)) for tInfo in self.m_ReadyUrl]
 
                 self.m_DoingUrl.update(self.m_ReadyUrl)
                 self.m_ReadyUrl.clear()
@@ -114,17 +119,17 @@ class CPubCrawler(object):
                 if unfinished:
                     print("="*20, unfinished)
                 htmls = [f.result() for f in finished]
-                for html, tInfo in htmls:
-                    await self.Parse(html, tInfo)
+                for url, dInfo, html in htmls:
+                    await self.Parse(url, dInfo, html)
             self._Save()
 
 
-    async def Crawl(self, tInfo):
-        url, *args = tInfo
+    async def Crawl(self, url, dInfo):
         r = await self.m_Session.get(url, headers=self.m_headers)
         html = await r.text(encoding=self.m_Encoding)
-        return html, tInfo
+        return url, dInfo, html
 
 
-    async def Parse(self, html, url):
-        self.m_ReadyUrl.remove(url)
+    async def Parse(self, url, dInfo, html):
+        # doing html
+        del self.m_DoingUrl[url]
