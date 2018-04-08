@@ -113,6 +113,7 @@ class CZww35(pubcrawler.CPubCrawler):
             dChapterInfo = {
                 "priority"  :2,
                 "parent"    :bookurl,
+                "time"      :misc.GetSecond(),
             }
             # print("Add Chapter url ", chapterurl)
             self.m_WaitingUrl[chapterurl] = dChapterInfo
@@ -128,7 +129,7 @@ class CZww35(pubcrawler.CPubCrawler):
         if not oDiv:
             misc.Write2File(self.m_LogPath, "%s %s" % (chapterurl, dChapterInfo))
             self.m_DoingUrl.pop(chapterurl)
-            lstAllUrl = self.m_DoneInfo[bookurl]["allurl"]
+            lstAllUrl = self.m_DoneInfo[bookurl].get("allurl", [])
             if chapterurl in lstAllUrl:
                 lstAllUrl.remove(chapterurl)
             self.CheckWriteBook(bookurl)
@@ -169,13 +170,20 @@ class CZww35(pubcrawler.CPubCrawler):
                 fp.writelines("=============%s=============\n" % sChapterTitle)
                 fp.writelines(sText)
                 fp.writelines("\n"*3)
-                print("\t【%s】章节已写入到 %s/%s.txt" % (sChapterTitle, sType, sTitle))  #TODO
+                print("\t【%s】 ————> %s/%s.txt" % (sChapterTitle, sType, sTitle))  #TODO
 
-        if not lstAllUrl:   # 全部下载完毕
-            dNewBookInfo = {
-                "statue"            :True,
-                "latest_chapter_url"    :dBookInfo["latest_chapter_url"]
-            }
-            self.m_DoneInfo[bookurl] = dNewBookInfo
-            print("%s.txt 下载完毕" % sTitle)
+        if not lstAllUrl:
+            self.FinishDownlandBook(bookurl)
+
+
+    def FinishDownlandBook(self, bookurl):
+        dBookInfo = self.m_DoneInfo[bookurl]
+        sTitle = dBookInfo.get("title", "")
+        dNewBookInfo = {
+            "statue"                :True,
+            "latest_chapter_url"    :dBookInfo["latest_chapter_url"],
+            "title"                 :sTitle
+        }
+        self.m_DoneInfo[bookurl] = dNewBookInfo
+        print("%s.txt 下载完毕" % sTitle)
 
