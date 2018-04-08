@@ -86,7 +86,7 @@ class CZww35(pubcrawler.CPubCrawler):
 
     async def ParseBook(self, bookurl, dBookInfo, html):
         soup = BeautifulSoup(html, 'lxml')
-        sTitle = soup.find("div", {"id":"title"}).h1.text
+        sTitle = soup.find("meta", {"property":"og:title"}).get("content")
         sTitle = self._Replace(sTitle)
         dBookInfo["title"] = sTitle
         oDetails = soup.find("div", {"id":"details"})
@@ -145,7 +145,7 @@ class CZww35(pubcrawler.CPubCrawler):
         dChapterInfo["chapter_title"] = sChapterTitle
 
         self.m_DoneInfo[chapterurl] = self.m_DoingUrl.pop(chapterurl)
-        print("\t本章节%s爬取完毕" % (sChapterTitle))
+        print("\t本章节[%s]爬取完毕" % (sChapterTitle))
 
         self.CheckWriteBook(bookurl)
 
@@ -168,8 +168,8 @@ class CZww35(pubcrawler.CPubCrawler):
 
                 fp.writelines("=============%s=============\n" % sChapterTitle)
                 fp.writelines(sText)
-                fp.writelines("\n"*8)
-                print("\t%s章节已写入到%s/%s中", sChapterTitle, sType, sTitle)
+                fp.writelines("\n"*3)
+                print("\t【%s】章节已写入到 %s/%s.txt" % (sChapterTitle, sType, sTitle))  #TODO
 
         if not lstAllUrl:   # 全部下载完毕
             dNewBookInfo = {
