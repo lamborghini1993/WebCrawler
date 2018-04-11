@@ -34,7 +34,13 @@ class CZww35(pubcrawler.CPubCrawler):
     m_DebugPrint = True
     m_Example = "http://www.35zww.com/zwwtopallvisit/0/"
     m_Url = "http://www.35zww.com/"
-    m_TryNum = 5    #尝试url的次数
+    m_TryNum = 3    #尝试url的次数
+    m_MyHeader = {
+        "Cookie"    :"UM_distinctid=161bce4ba8825-085872c0cfe3518-4c322172-232800-161bce4ba8960b; CNZZDATA1263996461=193942989-1519291352-https%253A%252F%252Fwww.baidu.com%252F%7C1523409800; clickbids=5210; cp_speed_8x=66; cp_fontsize_8x=16; cp_bg_8x=%23E7F4FE; PHPSESSID=atvjgleokiruds8jsou2vhtrf4; username=lamborghini",
+        "Host"      :"www.35zww.com",
+        "Upgrade-Insecure-Requests":"1",
+        "Accept-Encoding":"gzip,deflate",
+    }
 
     def _CustomInit(self):
         self._LoadWaitUrl()
@@ -71,30 +77,37 @@ class CZww35(pubcrawler.CPubCrawler):
         sTitle = soup.find("title").text
         if sTitle != ERROR_TITLE:    #有内容
             return False
-        iNum = dInfo.get("num", 0) + 1
-        dInfo["num"] = iNum
-        dInfo["time"] = dInfo.get("time", misc.GetSecond() - 3) + 3
-        if iNum < self.m_TryNum:
-            self.m_WaitingUrl[url] = dInfo
-        else:
-            iType = dInfo["priority"]
-            if iType == 3:
-                bookurl = dInfo["parent"]
-                lstAllUrl = self.m_DoneInfo[bookurl].get(WAITING_URL_KEYNAME, [])
-                if url in lstAllUrl:
-                    lstAllUrl.remove(url)
-                self.CheckWriteBook(bookurl)
-            misc.Write2File(self.m_LogPath, "abandon %s %s" % (url, dInfo))
-
+        iNum = self.m_FailUrl.get(url, 0) + 1
+        self.m_FailUrl[url] = iNum
         del self.m_DoingUrl[url]
+        if iNum < self.m_TryNum:
+            return True
+
+        del self.m_FailUrl[url]
+        iType = dInfo["priority"]
+        if iType == 2:
+            bookurl = dInfo["parent"]
+            lstAllUrl = self.m_DoneInfo[bookurl].get(WAITING_URL_KEYNAME, [])
+            if url in lstAllUrl:
+                lstAllUrl.remove(url)
+            self.CheckWriteBook(bookurl)
+        misc.Write2File(self.m_LogPath, "abandon %s %s" % (url, dInfo))
         return True
+
+
+    async def Crawl(self, url, dInfo):
+        sReferer = dInfo.get("parent", self.m_Url)
+        self.m_Headers["Referer"] = sReferer
+        super(CZww35, self).Crawl(url, dInfo)
 
 
     async def Parse(self, url, dInfo, html):
         iType = dInfo["priority"]
-        soup = BeautifulSoup(html, 'lxml')
+        soup = BeautifulSoup(html, "lxml")
         if self.Is404(url, dInfo, soup):
             return
+        if url in self.m_FailUrl:
+            del self.m_FailUrl[url]
         if iType == 0:
             await self.ParsePage(url, dInfo, soup)
         elif iType == 1:

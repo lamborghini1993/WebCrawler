@@ -21,7 +21,7 @@ class MyCrawler(object):
     m_ConfigDir = "Config"
     m_DownDir = "Downloads"
 
-    m_headers = {
+    m_Headers = {
         'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Encoding':'gb2312,utf-8',
         'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0',
@@ -106,7 +106,7 @@ class MyCrawler(object):
 
     async def Crawl(self, url):
         print("Crawl:", url)
-        r = await self.m_Session.get(url, allow_redirects=False, headers=self.m_headers)
+        r = await self.m_Session.get(url, allow_redirects=False, headers=self.m_Headers)
         html = await r.text(encoding="gbk")
         self.m_Seen.add(url)
         self.m_Unseen.remove(url)
@@ -147,7 +147,7 @@ class MyCrawler(object):
 
 
     async def DownPictur(self, filename, picurl, url):
-        r = await self.m_Session.get(picurl, headers=self.m_headers)
+        r = await self.m_Session.get(picurl, headers=self.m_Headers)
         picdata = await r.read()
         await self.dowland_pic(filename, picdata, picurl, url)
 
