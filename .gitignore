@@ -4,6 +4,9 @@ resources/
 */log.txt
 Downloads/
 __pycache__
+Config/
+test/
 
 # 忽略所有的pyc文件
 *.pyc
+*.html

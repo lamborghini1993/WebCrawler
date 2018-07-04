@@ -8,11 +8,9 @@
 
 import os
 
-from crawler import meizitu
-from crawler import zww35
-from crawler import shubao888
 
 __version__ = "trunk"
+
 
 def InitPubCode():
     if os.path.exists("pubcode"):
@@ -26,8 +24,14 @@ def InitPubCode():
 
 def start():
     InitPubCode()
+    # from crawler import meizitu
     # obj = meizitu.MyCrawler()
-    obj = zww35.CZww35()
+
+    # from crawler import zww35
+    # obj = zww35.CZww35()
+
+    from crawler import hdu
+    obj = hdu.HDU()
     obj.Start()
 
 
