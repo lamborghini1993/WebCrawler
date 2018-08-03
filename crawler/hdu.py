@@ -34,16 +34,13 @@ class HDU(pubcrawler.CPubCrawler):
             }
             self.m_WaitingUrl[pageurl] = dPageInfo
 
-    # async def Crawl(self, url, dInfo):
-    #     sReferer = dInfo.get("parent", self.m_Url)
-    #     self.m_Headers["Referer"] = sReferer
-    #     super(HDU, self).Crawl(url, dInfo)
+    def _Load(self):
+        super(HDU, self)._Load()
+        self.m_DoneInfo = {}
 
-    async def Parse(self, url, dInfo, html):
+    async def MyParse(self, url, dInfo, html):
         iType = dInfo["priority"]
         soup = BeautifulSoup(html, "lxml")
-        if url in self.m_FailUrl:
-            del self.m_FailUrl[url]
         if iType == 0:
             await self.ParsePage(url, dInfo, soup)
 
@@ -64,11 +61,3 @@ class HDU(pubcrawler.CPubCrawler):
                 Submit = int(Submit)
                 if not Done:
                     self.m_DoneInfo[ID] = (AC, Submit)
-        del self.m_DoingUrl[pageurl]
-
-    # def Start(self):
-    #     self.DebugPrint("Start_Begin")
-    #     self.m_Loop.run_until_complete(self.Run())
-    #     self.m_Loop.close()
-    #     self._Save()
-    #     self.DebugPrint("Start_End")
