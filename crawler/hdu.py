@@ -7,8 +7,8 @@
 """
 
 import re
-from pubcode import pubcrawler, misc
 from bs4 import BeautifulSoup
+from pubcode import pubcrawler
 
 INFO = re.compile(r"p(.*?);")
 
@@ -17,7 +17,7 @@ class HDU(pubcrawler.CPubCrawler):
     m_Flag = "HDU"
     m_Url = "http://acm.hdu.edu.cn/listproblem.php?"
     m_MyHeader = {
-        "Cookie": "PHPSESSID=m8fu2e6sbgtenj9d6m1rii79r3; exesubmitlang=0",
+        "Cookie": "PHPSESSID=jes9rrdrtjf9oodvj0ehmfm6u1",
         "Host": "acm.hdu.edu.cn",
         "Upgrade-Insecure-Requests": "1",
         "Accept-Encoding": "gzip,deflate",
@@ -38,13 +38,13 @@ class HDU(pubcrawler.CPubCrawler):
         super(HDU, self)._Load()
         self.m_DoneInfo = {}
 
-    async def MyParse(self, url, dInfo, html):
+    async def MyParse(self, _, dInfo, html):
         iType = dInfo["priority"]
         soup = BeautifulSoup(html, "lxml")
         if iType == 0:
-            await self.ParsePage(url, dInfo, soup)
+            await self.ParsePage(soup)
 
-    async def ParsePage(self, pageurl, dPageInfo, soup):
+    async def ParsePage(self, soup):
         for oA in soup.findAll("script", {"language": "javascript"}):
             alltext = oA.text
             if alltext.find("function p(color,pid,solved,title,ac,sub)") != -1:
@@ -55,7 +55,6 @@ class HDU(pubcrawler.CPubCrawler):
                 ss = ss.replace("p(", "")
                 ss = ss.replace(");", "")
                 _, ID, Done, AC, Submit = ss.split(",")
-                # ID = int(ID)
                 Done = int(Done)
                 AC = int(AC)
                 Submit = int(Submit)
